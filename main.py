@@ -1,21 +1,19 @@
 import json
-
+from random import randint
 class Task():
     def __init__(self, data):
         self.__id = data["id"]
-        self.content = data["content"]
+        self.task = data["task"]
+        self.status = data["status"]        
         
     def __str__(self):
-        return f"id: {self.get_id}, content: {self.content}"
+        return f'id: "{self.get_id}", task: "{self.task}", status: "{self.status}"'
 
     def retrive_data(self):
-        return {"id": self.get_id, "content": self.content}
-        
+        return {"id": self.get_id, "task": self.task, "status": self.status}
     @property
-    def get_id(self):
+    def get_id(self):   
         return self.__id
-
-
 class Todolist():
     def __init__(self):
         self.all_tasks = self.load_json()
@@ -25,16 +23,18 @@ class Todolist():
         while True:
             self.command_line_interface()
             self.save_to_json()
-            self.update_tasks()
-                     
+                        
     def load_json(self):
         output = []
-        with open("save-file.json") as file:
-            data = json.load(file)
+        try:
+            with open("save-file.json") as file:
+                data = json.load(file)
+            for task in data["tasks"]:
+                output.append(Task(task))
+        
+        except:
+            pass
             
-        for task in data["tasks"]:
-            output.append(Task(task))
-    
         return output
     
     def save_to_json(self):
@@ -43,53 +43,69 @@ class Todolist():
             tasks_data.append(task.retrive_data())
             
         save_file = {"tasks": tasks_data}
-        
         with open("save-file.json", "w") as file:
             json.dump(save_file, file)
-              
-    def update_tasks(self):
-        pass
+            
+    def find_task(self, task_id):
+        for task in self.all_tasks:
+            if task_id == task.retrive_data["id"]:
+                return task
+            else:
+                return None
+        
+    def generate_id(self): 
+        def generator(): #Generate id string 5 digits
+            task_id = str(randint(1, 999))
+            while len(task_id) < 3:
+                task_id = "0" + task_id
+            return task_id
+        
+        while True:
+            task_id = generator()
+            for task in self.all_tasks:
+                task_data = task.retrive_data()
+                if task_data["id"] == task_id:
+                    continue
+            break
+            
+        return task_id
             
     def command_line_interface(self):
-        for i in self.all_tasks:
+        for i in self.all_tasks: #Print semua task
             print(i)
             
         def print_commands():
-            print("add")
-            print("update")
-            print("delete")
-            print("mark")
-            print("list")
+            print("add; add new task")
+            print("ls; List all command")
+            print("rm; Remove task")
+            print("mk; Mark done task")
+            print("sv; Saves the task")
         
-        def add_task(content):
-            def generate_id():
-                return len(self.all_tasks)
+        def add_task():
+            task = input("Task: ")
+            task_id = self.generate_id()
             
-            task_id = generate_id()
-            task_content = content
-            data = {"id": task_id, "content": task_content}
-
+            data = {"id": task_id, "task": task, "status": False}
             self.all_tasks.append(Task(data))
         
+        def delete_task(): # !!! BUAT FUNGSI UNTUK MENGHAPUS TASK !!!
+            task_id = int(input("Input the task ID: "))
+            print(self.all_tasks[task_id])
+            self.all_tasks.pop(task_id)          
+
         def execute_command(cmd_line: str):
-            cmd = cmd_line.split(" ")    
-            match cmd[0]:
+            match cmd_line:
                 case "help":
                     print_commands()
                 case "add":
-                    if cmd[1][0] == "'" and cmd[1][-1] == "'" or cmd[1][0] == '"' and cmd[1][-1] == '"':   
-                        k = cmd[1][1:-1]
-                        add_task(k)
-                    else:
-                        print("wrong input")
-                    
-                case "update":
+                    add_task()
+                case "sv":
                     pass
-                case "delete":
+                case "rm":
+                    delete_task()
+                case "mk":
                     pass
-                case "mark":
-                    pass
-                case "list":
+                case "ls":
                     pass
             
         cmd_line = input()
@@ -97,9 +113,7 @@ class Todolist():
     
 if __name__ == "__main__":
     Todolist()
-            
-        
-        
+
 """
     Add, Update, and Delete tasks
 
